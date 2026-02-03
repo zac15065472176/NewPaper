@@ -1,0 +1,21 @@
+Metadata-Version: 2.4
+Name: adaprune
+Version: 0.1.0
+Summary: AdaPrune: Adaptive Pruning for Gradient Boosted Decision Trees
+Author: AdaPrune Authors
+Requires-Dist: numpy==1.26.4
+Requires-Dist: pandas==2.2.0
+Requires-Dist: scikit-learn==1.4.0
+Requires-Dist: matplotlib==3.8.2
+Requires-Dist: seaborn==0.13.2
+Requires-Dist: openml==0.14.1
+Requires-Dist: tqdm==4.66.1
+Requires-Dist: scipy==1.12.0
+Requires-Dist: xgboost==2.0.3
+Requires-Dist: lightgbm==4.2.0
+Requires-Dist: optuna==3.5.0
+Requires-Dist: torch==2.1.2
+Requires-Dist: psutil==5.9.8
+Dynamic: author
+Dynamic: requires-dist
+Dynamic: summary

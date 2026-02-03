@@ -1,0 +1,61 @@
+AdaPrune/
+├── README.md
+├── requirements.txt
+├── setup.py
+│
+├── configs/
+│   ├── datasets_config.py      # 数据集配置
+│   ├── experiment_config.yaml  # 实验配置
+│   └── model_config.yaml       # 模型配置
+│
+├── adaprune/
+│   ├── __init__.py
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── adaprune_gbdt.py
+│   │   ├── data_analyzer.py
+│   │   ├── state_monitor.py
+│   │   └── pruning_controller.py
+│   ├── strategies/
+│   │   ├── __init__.py
+│   │   ├── base. py
+│   │   ├── gap_based.py
+│   │   ├── trend_based.py
+│   │   ├── data_aware.py
+│   │   └── hybrid. py
+│   └── utils/
+│       ├── __init__.py
+│       ├── data_loader.py
+│       ├── metrics.py
+│       └── visualization.py
+│
+├── scripts/
+│   ├── download_datasets.py    # 数据下载脚本
+│   ├── setup_environment.py    # 环境检查脚本
+│   └── run_all_experiments.py  # 批量实验脚本
+│
+├── experiments/
+│   ├── exp01_main_comparison.py
+│   ├── exp02_overfitting_scenarios.py
+│   ├── exp03_ablation_study.py
+│   ├── exp04_sensitivity_analysis.py
+│   └── exp05_efficiency_analysis.py
+│
+├── notebooks/
+│   ├── 01_data_exploration.ipynb
+│   ├── 02_method_development.ipynb
+│   ├── 03_results_analysis.ipynb
+│   └── 04_visualization. ipynb
+│
+├── data/
+│   ├── raw/           # 原始数据
+│   └── processed/     # 处理后的数据
+│
+├── results/
+│   ├── tables/        # 结果表格
+│   └── figures/       # 图表
+│
+└── tests/
+    ├── test_data_analyzer.py
+    ├── test_state_monitor.py
+    └── test_adaprune. py
