@@ -1,0 +1,41 @@
+// AdaPrune Framework Overview
+digraph AdaPrune {
+	dpi=300 rankdir=LR size="10,8"
+	node [fontname=Arial fontsize=12 margin=0.2 shape=rect style=filled]
+	TrainData [label="Training
+Data" fillcolor="#6baed6"]
+	ProfileAnalyzer [label="Data Profile
+Analyzer" fillcolor="#74c476"]
+	GBDTTraining [label="GBDT
+Training" fillcolor="#74c476"]
+	StateMonitor [label="State
+Monitor" fillcolor="#74c476"]
+	TrainedModel [label="Trained
+Model" fillcolor="#bc80bd"]
+	PruningController [label="Pruning
+Controller" fillcolor="#fb6a4a" height=1.5 width=1.5]
+	subgraph cluster_strategies {
+		style=invis
+		Hybrid [label=Hybrid fillcolor="#fcae91"]
+		DataAware [label="Data-aware" fillcolor="#fcae91"]
+		TrendBased [label="Trend-based" fillcolor="#fcae91"]
+		GapBased [label="Gap-based" fillcolor="#fcae91"]
+		Hybrid -> DataAware [style=invis]
+		DataAware -> TrendBased [style=invis]
+		TrendBased -> GapBased [style=invis]
+	}
+	TrainData -> ProfileAnalyzer
+	TrainData -> GBDTTraining
+	ProfileAnalyzer -> TrainedModel
+	GBDTTraining -> ProfileAnalyzer [label="• Noise Level
+• Sample Size
+• Class Overlap" fontsize=10]
+	GBDTTraining -> StateMonitor [label="Adaptive
+Feedback" dir=both fontsize=10 style=dashed]
+	StateMonitor -> PruningController [dir=both]
+	MonitorNote [label="• Gap
+• Trend
+• Overfit Score" fillcolor=none fontsize=10 shape=plain style=""]
+	StateMonitor -> MonitorNote [style=invis]
+	PruningController -> Hybrid [style=invis]
+}
