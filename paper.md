@@ -21,24 +21,24 @@
 梯度提升决策树是一种常见的集成学习方法，也是机器学习实际应用中使用最多的技术之一。它通过迭代方式构建加法模型，每一轮迭代都会添加一个新的弱学习器来纠正当前集成模型的预测误差。GBDT的核心思想是利用梯度下降的思想，将残差作为新学习器的训练目标。
 
 ### 2.1. Gradient Boosting Framework
-在Friedman提出的梯度提升框架中，设训练集为${(x_i, y_i)}_{i=1}^n$，其中$x_i ∈ ℝ^d$为特征向量，$y_i$为标签。梯度提升采用前向分步策略，在第$t$轮迭代时，固定已有的集成模型$F_{t-1}(x)$，学习一个新的基学习器$f_t(x)$：
+在Friedman提出的梯度提升框架中，设训练集为${(x_{i}, y_{i})}_{i=1}^{n}}$，其中$x_{i} \in \mathbb{R}^{d}$为特征向量，$y_{i}$为标签。梯度提升采用前向分步策略，在第$t$轮迭代时，固定已有的集成模型$F_{t-1}(x)$，学习一个新的基学习器$f_{t}(x)$：
 
-$F_t(x) = F_{t-1}(x) + η⋅f_t(x)$
+$F_{t}(x) = F_{t-1}(x) + \eta \cdot f_{t}(x)$
 
-其中$η ∈ (0,1]$为学习率，用于控制每棵新树对集成模型的贡献程度。新的基学习器$f_t$通过拟合损失函数关于当前预测值的负梯度来确定：
+其中$\eta \in (0,1]$为学习率，用于控制每棵新树对集成模型的贡献程度。新的基学习器$f_{t}$通过拟合损失函数关于当前预测值的负梯度来确定：
 
-$y_i^{(t)} = -\left[\frac{∂L(y_i, F(x_i))}{∂F(x_i)}\right]_{F=F_{t-1}}$
+$y_{i}^{(t)} = -\left[ \frac{\partial L(y_{i}, F(x_{i}))}{\partial F(x_{i})} \right]_{F=F_{t-1}}$
 
 ### 2.2. XGBoost Algorithm
 在Chen和Guestrin提出的XGBoost算法[1]中，目标函数包含损失项和正则项：
 
-$ℒ^{(t)} = \sum_{i=1}^n l(y_i, \hat{y}_i^{(t)}) + Ω(f_t)$
+$\mathcal{L}^{(t)} = \sum_{i=1}^{n} l(y_{i}, \hat{y}_{i}^{(t)}) + \Omega(f_{t})$
 
-正则项$Ω(f)$定义为：
+正则项$\Omega(f)$定义为：
 
-$Ω(f) = γT + \frac{1}{2}λ\sum_{j=1}^T w_j^2$
+$\Omega(f) = \gamma T + \frac{1}{2} \lambda \sum_{j=1}^{T} w_{j}^{2}$
 
-其中$T$表示叶子节点数目，$w_j$表示第$j$个叶子节点的输出值，$γ$和$λ$分别控制对叶子数量和叶子权重的惩罚力度。XGBoost还引入了列采样、行采样等正则化技术来进一步控制过拟合。
+其中$T$表示叶子节点数目，$w_{j}$表示第$j$个叶子节点的输出值，$\gamma$和$\lambda$分别控制对叶子数量和叶子权重的惩罚力度。XGBoost还引入了列采样、行采样等正则化技术来进一步控制过拟合。
 
 ### 2.3. LightGBM Algorithm
 LightGBM算法[2]采用基于直方图的分裂算法，将连续特征离散化为直方图bin，大大减少了分裂点搜索的计算量。同时采用叶子优先(Leaf-wise)生长策略，每次选择增益最大的叶子进行分裂，而非传统的层次优先(Level-wise)策略。此外，LightGBM还提出了GOSS(Gradient-based One-Side Sampling)和EFB(Exclusive Feature Bundling)等技术来加速训练。
@@ -46,20 +46,26 @@ LightGBM算法[2]采用基于直方图的分裂算法，将连续特征离散化
 ### 2.4. Pruning Parameters
 除正则化系数外，主流GBDT实现通常还提供以下控制树复杂度的超参数：
 
-- max_depth（最大深度）：限制树在垂直方向上的最大生长层数。深度为$d$的树最多有$2^d$个叶子节点。较大的深度允许树学习更复杂的模式，但也更容易过拟合。
-- min_child_weight（最小叶子权重）：规定一个叶子节点所需包含的最小样本权重和。增大此参数可以防止在样本稀少的区域进行过度分裂。
-- subsample（样本采样比例）：每轮迭代随机选取的训练样本比例。设置小于1的值可以引入随机性，有助于减少过拟合。
-- colsample_bytree（特征采样比例）：每棵树随机选取的特征比例，与样本采样类似能引入随机性。
+max_depth（最大深度）：限制树在垂直方向上的最大生长层数。深度为$d$的树最多有$2^{d}$个叶子节点。较大的深度允许树学习更复杂的模式，但也更容易过拟合。
+
+min_child_weight（最小叶子权重）：规定一个叶子节点所需包含的最小样本权重和。增大此参数可以防止在样本稀少的区域进行过度分裂。
+
+subsample（样本采样比例）：每轮迭代随机选取的训练样本比例。设置小于1的值可以引入随机性，有助于减少过拟合。
+
+colsample_bytree（特征采样比例）：每棵树随机选取的特征比例，与样本采样类似能引入随机性。
 
 这些参数共同决定了GBDT模型的复杂度。参数设置过于宽松会导致过拟合，设置过于严格会导致欠拟合。最优配置取决于具体数据集的特性。
 
 ### 2.5. Hyperparameter Optimization Methods
 传统的超参数优化方法将参数选择视为黑盒优化问题。
 
-- 网格搜索：预先定义每个超参数的候选取值，然后穷举所有可能的组合。这种方法简单直观，但计算复杂度随参数数量指数增长。
-- 随机搜索：Bergstra和Bengio[5]的研究表明，随机搜索在相同计算预算下往往优于网格搜索。其原因在于超参数的重要性通常不均匀，随机搜索能更好地覆盖重要参数的取值范围。
-- 贝叶斯优化：Snoek等人[6]将贝叶斯优化应用于超参数调优。该方法使用概率代理模型建模超参数与性能之间的关系，通过采集函数选择下一个评估点。
-- Hyperband：Li等人[7]提出的Hyperband算法结合了随机搜索和早停策略，通过逐步淘汰表现不佳的配置来加速搜索。
+网格搜索：预先定义每个超参数的候选取值，然后穷举所有可能的组合。这种方法简单直观，但计算复杂度随参数数量指数增长。
+
+随机搜索：Bergstra和Bengio[5]的研究表明，随机搜索在相同计算预算下往往优于网格搜索。其原因在于超参数的重要性通常不均匀，随机搜索能更好地覆盖重要参数的取值范围。
+
+贝叶斯优化：Snoek等人[6]将贝叶斯优化应用于超参数调优。该方法使用概率代理模型建模超参数与性能之间的关系，通过采集函数选择下一个评估点。
+
+Hyperband：Li等人[7]提出的Hyperband算法结合了随机搜索和早停策略，通过逐步淘汰表现不佳的配置来加速搜索。
 
 上述方法的共同特点是在训练开始前确定参数，并在整个训练过程中保持不变。本文打破这一范式，允许参数在训练过程中根据泛化状态动态变化。
 
@@ -84,17 +90,19 @@ AdaPrune的设计理念是将“事前调参”转化为“事中调参”，使
 
 噪声水平估计：采用最近邻分类器的交叉验证错误率作为噪声的代理指标。如果数据是干净的，1-NN应该能达到较高准确率；如果标签存在噪声或类别边界模糊，1-NN的错误率会上升：
 
-$\hat{ϵ} = 1 - Acc_{1-NN}$
+$\hat{\epsilon} = 1 - Acc_{1-NN}$
 
 样本充分性评估：小样本数据集更容易过拟合，需要更强的正则化。我们将样本量映射到一个调节因子：
 
-$α_n = \sqrt[3]{\frac{1000}{max(n, 100)}}$
+$\alpha_{n} = \sqrt[3]{\frac{1000}{\max(n, 100)}}$
 
-当$n < 1000$时，$α_n > 1$，表示需要比默认更强的正则化。
+当$n < 1000$时，$\alpha_{n} > 1$，表示需要比默认更强的正则化。
 
 参数初始化规则：基于数据画像，按照表1的规则确定剪枝参数的初始值。
 
-Table 1: Parameter initialization rules based on data profile
+Table 1
+
+Parameter initialization rules based on data profile
 
 |Noise Level|Sample Size|max_depth|min_child_weight|
 |---|---|---|---|
@@ -108,7 +116,99 @@ Table 1: Parameter initialization rules based on data profile
 ### 3.3. State Monitoring Module
 状态监控模块在每个检查周期收集以下信息。图2展示了一个典型的监控过程，包括学习曲线、泛化差距变化以及参数的自适应调整。
 
-![img]((a)Learning Curves(b)Generalization Gap1.00Threshold (0.05)0.14Warmup end0.95·0.12-0.900.10-(1v-0.85 A0.08nieT)0.80·0.06de0.750.04Train0.700.02Val idationWarmup end0.650.0025500255075100125150175200075125150175100200Boosting IterationBoosting Iteration(c) Adaptive max_depth(d) Adaptive min_chi ld_weight7.03.5Warmup endWarmup end6.5Detect overfitting3.0→reduce depth6.02.5hgienbh iho5.5hadap xm2.05.01.5nim4.51.04.00.53.5·3.0·0.002550751001251501752000255075100125175150200Boosting IterationBoosting Iteration)
+![img]((a)Learning Curves
+(b)Generalization Gap
+1.00
+Threshold (0.05)
+0.14
+Warmup end
+0.95·
+0.12-
+0.90
+0.10-
+(1v-
+0.85
+ A
+0.08
+nieT)
+0.80·
+0.06
+de
+0.75
+0.04
+Train
+0.70
+0.02
+Val idation
+Warmup end
+0.65
+0.00
+25
+50
+0
+25
+50
+75
+100
+125
+150
+175
+200
+0
+75
+125
+150
+175
+100
+200
+Boosting Iteration
+Boosting Iteration
+(c) Adaptive max_depth
+(d) Adaptive min_chi ld_weight
+7.0
+3.5
+Warmup end
+Warmup end
+6.5
+Detect overfitting
+3.0
+→reduce depth
+6.0
+2.5
+hgienbh iho
+5.5
+hadap xm
+2.0
+5.0
+1.5
+nim
+4.5
+1.0
+4.0
+0.5
+3.5·
+3.0·
+0.0
+0
+25
+50
+75
+100
+125
+150
+175
+200
+0
+25
+50
+75
+100
+125
+175
+150
+200
+Boosting Iteration
+Boosting Iteration)
 
 图2: AdaPrune训练过程示意图。(a)训练集和验证集的学习曲线；(b)泛化差距随迭代变化；(c)max_depth的自适应调整；(d)min_child_weight的自适应调整。当检测到过拟合趋势时，系统自动降低max_depth并增加min_child_weight。
 
@@ -116,34 +216,38 @@ Table 1: Parameter initialization rules based on data profile
 
 $g^{(t)} = Acc_{train}^{(t)} - Acc_{val}^{(t)}$
 
-差距越大，过拟合越严重。设定警戒阈值$θ_g$（默认0.05），当$g > θ_g$时发出过拟合警报。
+差距越大，过拟合越严重。设定警戒阈值$\theta_{g}$（默认0.05），当$g > \theta_{g}$时发出过拟合警报。
 
 变化趋势(Gap Trend)：相邻检查点之间差距的变化反映过拟合是否在加剧：
 
-$Δg^{(t)} = g^{(t)} - g^{(t-1)}$
+$\Delta g^{(t)} = g^{(t)} - g^{(t-1)}$
 
 连续多个正值表明过拟合正在恶化，应立即干预。
 
 过拟合分数(Overfitting Score)：综合考虑差距绝对值和变化趋势：
 
-$o^{(t)} = 0.6×σ(5⋅g^{(t)}) + 0.4×σ(50⋅max(0, Δg^{(t)}))$
+$o^{(t)} = 0.6 \times \sigma(5 \cdot g^{(t)}) + 0.4 \times \sigma(50 \cdot \max(0, \Delta g^{(t)}))$
 
-其中$σ(⋅)$是sigmoid函数。该分数越接近1，过拟合越严重。
+其中$\sigma(\cdot)$是sigmoid函数。该分数越接近1，过拟合越严重。
 
 ### 3.4. Adaptive Pruning Strategies
 剪枝控制模块支持四种可选策略：
 
-- 策略A：阈值触发式(Gap-based)。最直接的策略，根据当前泛化差距决定是否调整。如果$g > θ_g$则增强正则化，如果$g < θ_g/2$且验证性能在提升则轻微放松正则化。该策略响应迅速，但可能对短期波动过于敏感。
-- 策略B：趋势驱动式(Trend-based)。关注变化趋势而非绝对值，更加稳健。如果连续3个周期$Δg > 0$则增强正则化。该策略更稳定，但响应速度较慢。
-- 策略C：数据感知式(Data-aware)。将数据特征纳入决策，调整幅度与数据难度相关：
+策略A：阈值触发式(Gap-based)。最直接的策略，根据当前泛化差距决定是否调整。如果$g > \theta_{g}$则增强正则化，如果$g < \theta_{g}/2$且验证性能在提升则轻微放松正则化。该策略响应迅速，但可能对短期波动过于敏感。
 
-$strength = (1 + 2\hat{ϵ})⋅α_n⋅o^{(t)}$
+策略B：趋势驱动式(Trend-based)。关注变化趋势而非绝对值，更加稳健。如果连续3个周期$\Delta g > 0$则增强正则化。该策略更稳定，但响应速度较慢。
+
+策略C：数据感知式(Data-aware)。将数据特征纳入决策，调整幅度与数据难度相关：
+
+$strength = (1 + 2\hat{\epsilon}) \cdot \alpha_{n} \cdot o^{(t)}$
 
 对于高噪声或小样本数据，采用更大的调整幅度。
 
-- 策略D：阶段混合式(Hybrid)。根据训练进度在上述策略之间切换，如表2所示。
+策略D：阶段混合式(Hybrid)。根据训练进度在上述策略之间切换，如表2所示。
 
-Table 2: Strategy switching rules in Hybrid mode
+Table 2
+
+Strategy switching rules in Hybrid mode
 
 |Training Progress|Active Strategy|Rationale|
 |---|---|---|
@@ -156,27 +260,27 @@ Table 2: Strategy switching rules in Hybrid mode
 ### 3.5. Algorithm Description
 基于泛化差距监控的自适应剪枝算法原理描述如下：
 
-Algorithm 1: AdaPrune - Online Adaptive Pruning for GBDT
+Algorithm 1 : AdaPrune - Online Adaptive Pruning for GBDT
 
 |Input：Training set $D$, Max rounds $T$, Check interval $k$, Strategy $S$|
 |---|
-|Output：Trained ensemble model $F^*$|
+|Output：Trained ensemble model $F^{*}$|
 | 1：Split $D$ into $D_{train}$ and $D_{val}$|
-| 2：$profile$ ← AnalyzeDataProfile($D_{train}$)|
-| 3：$params$ ← InitializeParams($profile$)|
-| 4：$F$ ← EmptyEnsemble(); $F^*$ ← null; $best_score$ ← $-∞$|
+| 2：$profile$ $←$ AnalyzeDataProfile($D_{train}$)|
+| 3：$params$ $←$ InitializeParams($profile$)|
+| 4：$F$ $←$ EmptyEnsemble(); $F^{*}$ $←$ null; $best\_score$ $←$ $−∞$|
 | 5：for $t$ = 1 to $T$ do|
-| 6：  $tree_t$ ← TrainDecisionTree($D_{train}$, $F$, $params$)|
-| 7：  $F$ ← $F$ + $η⋅tree_t$|
-| 8： if $t$ mod $k$ == 0 then|
-| 9：    $gap ← Evaluate(F, D_{train}) - Evaluate(F, D_{val})$|
+| 6：  $tree_{t}$ ← TrainDecisionTree($D_{train}$, $F$, $params$)|
+| 7：  $F$ ← $F$ + $\eta⋅tree_{t}$|
+| 8： if $t$ $mod$ $k$ == 0 then|
+| 9：    $gap←Evaluate(F, D_{train})−Evaluate(F, D_{val})$|
 |10：    $params$ ← AdaptParams($params$, $gap$, $profile$, $S$)|
 |11：  end if|
-|12：  if Evaluate($F$, $D_{val}$) > $best_score$ then|
-|13：    $best_score ← Evaluate(F, D_{val})$; $F^* ← Snapshot(F)$|
+|12：  if Evaluate($F$, $D_{val}$) > $best\_score$ then|
+|13：    $best\_score←Evaluate(F, D_{val})$; $F^{*}←Snapshot(F)$|
 |14： end if|
 |15：end for|
-|16：return $F^*$|
+|16：return $F^{*}$|
 
 其中，训练集$D$被划分为训练部分和验证部分，验证部分用于监控泛化状态。算法的核心是第8-11行的自适应检查点逻辑，每隔$k$轮迭代评估泛化差距并决定是否调整参数。
 
@@ -190,18 +294,20 @@ Algorithm 1: AdaPrune - Online Adaptive Pruning for GBDT
 
 准确率、F1分数、泛化差距的数学公式表示如下：
 
-$\begin{eqnarray}Accuracy = \frac{TP + TN}{TP + TN + FP + FN} # (1)\\\end{eqnarray}$
+$\begin{eqnarray}Accuracy = \frac{TP + TN}{TP + TN + FP + FN} \quad (1)\\\end{eqnarray}$
 
-$\begin{eqnarray}F1 = 2×\frac{Precision×Recall}{Precision + Recall} # (2)\\\end{eqnarray}$
+$\begin{eqnarray}F1 = 2 \times \frac{Precision \times Recall}{Precision + Recall} \quad (2)\\\end{eqnarray}$
 
-$\begin{eqnarray}Gap = Acc_{train} - Acc_{test} # (3)\\\end{eqnarray}$
+$\begin{eqnarray}Gap = Acc_{train} - Acc_{test} \quad (3)\\\end{eqnarray}$
 
 其中TP是真正类、FN是假负类、FP是假正类、TN是真负类。
 
 ### 4.2. Data Set
 实验中采用的7个数据集包括sklearn内置的真实数据集和人工构造的合成数据集。这些数据集涵盖了不同的样本规模、特征维度和任务难度，能够全面评估算法在各种场景下的表现。数据集的详细统计信息如表3所示。
 
-Table 3: Data set details
+Table 3
+
+Data set details
 
 |NO|Data Set|Type|Features|Samples|Classes|Domain|
 |---|---|---|---|---|---|---|
@@ -223,7 +329,9 @@ Table 3: Data set details
 
 从表4可以看出，RF_default算法的平均准确率最高，达到了89.72%。在7种算法里，基线方法（XGB_default、XGB_tuned、RF_default）整体准确率略高于AdaPrune变体，差距约为2个百分点。这是因为AdaPrune为控制过拟合采用了更强的正则化约束，在一定程度上限制了模型的拟合能力。这是一种有意识的权衡：牺牲少量准确率换取更好的泛化保障。
 
-Table 4: Accuracy assessment
+Table 4
+
+Accuracy assessment
 
 |Data Set|XGB_def|XGB_tuned|RF|AP_hybrid|AP_data|AP_gap|AP_trend|
 |---|---|---|---|---|---|---|---|
@@ -236,9 +344,11 @@ Table 4: Accuracy assessment
 |synthetic_highdim|79.20%|78.40%|80.40%|74.60%|75.20%|73.60%|73.00%|
 |Average|89.67%|89.37%|89.72%|87.54%|87.48%|87.02%|86.48%|
 
-Table 5: Number of data sets with the best\middle\worst accuracy
+Table 5
 
-||XGB_def|XGB_tuned|RF|AP_hybrid|AP_data|AP_gap|AP_trend|
+Number of data sets with the best\middle\worst accuracy
+
+| |XGB_def|XGB_tuned|RF|AP_hybrid|AP_data|AP_gap|AP_trend|
 |---|---|---|---|---|---|---|---|
 |Best|3|2|2|1|1|1|1|
 |Middle|4|4|5|5|5|4|4|
@@ -253,7 +363,9 @@ Table 5: Number of data sets with the best\middle\worst accuracy
 
 从表6可以看出，AdaPrune_hybrid算法的平均泛化差距最低，仅为9.32%，比XGB_default的10.33%降低了9.8%。这验证了AdaPrune在控制过拟合方面的有效性。AdaPrune_data次之，平均Gap为9.37%。
 
-Table 6: Generalization gap assessment (lower is better)
+Table 6
+
+Generalization gap assessment (lower is better)
 
 |Data Set|XGB_def|XGB_tuned|RF|AP_hybrid|AP_data|AP_gap|AP_trend|
 |---|---|---|---|---|---|---|---|
@@ -268,13 +380,70 @@ Table 6: Generalization gap assessment (lower is better)
 
 图3直观展示了各方法的性能对比。
 
-![img]((a)Test Accuracy Compar ison(b)General ization Gap Comparison0.920.14Basel ineAdaPrune (lower is better)0.910.120.10450.10330.10310.10280.89720.90-0.89670.09850.100.89370.09320.09376ee0.89oO0.08-Afz0.88-0.87540.87480.87020.87-0.86480.04-0.86-0.020.85-Basel ineAdaPrune0.840.00AP hybridAP hybridAP_trendXGB_defXGB_tunedRAP_dataAP gapAP trendXB8_defXGB_tunedRAP_dataAP_gap)
+![img]((a)
+Test Accuracy Compar ison
+(b)
+General ization Gap Comparison
+0.92
+0.14
+Basel ine
+AdaPrune (lower is better)
+0.91
+0.12
+0.1045
+0.1033
+0.1031
+0.1028
+0.8972
+0.90-
+0.8967
+0.0985
+0.10
+0.8937
+0.0932
+0.0937
+6ee
+0.89
+oO
+0.08-
+A
+fz
+0.88-
+0.8754
+0.8748
+0.8702
+0.87-
+0.8648
+0.04-
+0.86-
+0.02
+0.85-
+Basel ine
+AdaPrune
+0.84
+0.00
+AP hybrid
+AP hybrid
+AP_trend
+XGB_def
+XGB_tuned
+R
+AP_data
+AP gap
+AP trend
+XB8_def
+XGB_tuned
+R
+AP_data
+AP_gap)
 
-图3: 整体性能对比。(a)测试准确率对比，蓝色为基线方法，红色为AdaPrune变体；(b)泛化差距对比，绿色为AdaPrune（越低越好），橙色虚线为0.10阈值。
+图3: 整体性能对比。(a)测试准确率对比，蓝色为基线方法，橙色为AdaPrune变体；(b)泛化差距对比，绿色为AdaPrune（越低越好），橙色虚线为0.10阈值。
 
-Table 7: Number of data sets with the best\middle\worst gap
+Table 7
 
-||XGB_def|XGB_tuned|RF|AP_hybrid|AP_data|AP_gap|AP_trend|
+Number of data sets with the best\middle\worst gap
+
+| |XGB_def|XGB_tuned|RF|AP_hybrid|AP_data|AP_gap|AP_trend|
 |---|---|---|---|---|---|---|---|
 |Best|0|2|0|2|2|2|1|
 |Middle|5|4|6|4|4|4|5|
@@ -304,9 +473,11 @@ Table 8: F1-score assessment
 |synthetic_highdim|79.16%|78.36%|80.36%|74.56%|75.16%|73.56%|72.96%|
 |Average|89.63%|89.34%|89.70%|87.52%|87.45%|86.99%|86.44%|
 
-Table 9: Number of data sets with the best\middle\worst F1-score
+Table 9
 
-||XGB_def|XGB_tuned|RF|AP_hybrid|AP_data|AP_gap|AP_trend|
+Number of data sets with the best\middle\worst F1-score
+
+| |XGB_def|XGB_tuned|RF|AP_hybrid|AP_data|AP_gap|AP_trend|
 |---|---|---|---|---|---|---|---|
 |Best|3|2|2|1|1|1|1|
 |Middle|4|4|5|5|5|4|4|
@@ -319,7 +490,9 @@ Table 9: Number of data sets with the best\middle\worst F1-score
 
 从表10可以看出，XGB_tuned算法的平均训练时间最短，仅为0.038秒。AdaPrune_hybrid的平均训练时间为0.687秒，约为XGB_default的12倍。在这7种算法里，训练时间最短的是XGB_tuned，这得益于其使用了优化的分裂算法。
 
-Table 10: Time assessment (seconds, lower is better)
+Table 10
+
+Time assessment (seconds, lower is better)
 
 |Data Set|XGB_def|XGB_tuned|RF|AP_hybrid|AP_data|AP_gap|AP_trend|
 |---|---|---|---|---|---|---|---|
@@ -332,9 +505,11 @@ Table 10: Time assessment (seconds, lower is better)
 |synthetic_highdim|0.128|0.098|0.286|1.098|1.112|1.043|1.378|
 |Average|0.056|0.038|0.141|0.687|0.680|0.690|0.747|
 
-Table 11: Number of data sets with the best\middle\worst time
+Table 11
 
-||XGB_def|XGB_tuned|RF|AP_hybrid|AP_data|AP_gap|AP_trend|
+Number of data sets with the best\middle\worst time
+
+| |XGB_def|XGB_tuned|RF|AP_hybrid|AP_data|AP_gap|AP_trend|
 |---|---|---|---|---|---|---|---|
 |Best|0|7|0|0|0|0|0|
 |Middle|7|0|7|5|5|5|4|
@@ -347,18 +522,54 @@ AdaPrune的训练时间较长，主要原因有三：（1）增量训练模式�
 #### 4.3.5. Scenario Analysis
 为深入理解AdaPrune的适用场景，图4展示了不同数据场景下的泛化差距对比。
 
-![img](Generalization Gap Across Different Scenarios0.25XGBoostAdaPrune0.20-11%e roiterieen0.15-44%-9%0.10-41%0.050.00CleanCleanNoisyNoisyHigh-dimImbalanced(large)(small)(large)(small))
+![img](General ization Gap Across Different Scenar ios
+0.25
+XGBoost
+AdaPrune
+0.20
+-11%
+deg
+0.15
+no1Ozi ie
+-40%
+0.10-
+-10%
++8%
+-42%
+0.05
++47%
+0.00·
+Clean
+Clean
+Noisy
+Noisy
+High-dim
+I mba l anced
+(small)
+(smal1)
+(large)
+(large))
 
-![img](General ization Gap Across Different Scenar ios0.25XGBoostAdaPrune0.20-11%deg0.15no1Ozi ie-40%0.10--10%+8%-42%0.05+47%0.00·CleanCleanNoisyNoisyHigh-dimI mba l anced(small)(smal1)(large)(large))
+图4: 不同数据场景下的泛化差距对比。蓝色为XGBoost，橙色为AdaPrune。百分比标注显示AdaPrune相对于XGBoost的改进幅度（负值表示改进，正值表示劣化）。
 
-图4: 不同数据场景下的泛化差距对比。蓝色为XGBoost，红色为AdaPrune。绿色标注显示AdaPrune的改进幅度。
+从图4可以看出：
 
-从图4可以看出，AdaPrune在噪声数据场景（Noisy-Large、Noisy-Small）下优势最为明显，改进幅度分别达到41%和44%。这是因为噪声数据更容易导致过拟合，而AdaPrune能够通过监控验证性能及时检测并干预。在干净大样本场景（Clean-Large）下，XGBoost默认参数已接近最优，AdaPrune的干预反而略显保守。
+1.噪声数据场景优势显著：AdaPrune在Noisy(large)和Noisy(small)场景下优势最为明显，改进幅度分别达到42%和40%。这是因为噪声数据更容易导致过拟合，而AdaPrune能够通过监控验证性能及时检测并干预。
+
+2.高维数据场景有效：在High-dim场景下，AdaPrune实现了11%的改进，表明自适应剪枝对高维特征空间也有一定的正则化效果。
+
+3.干净数据场景需权衡：在Clean(large)场景下，XGBoost默认参数已接近最优，AdaPrune的额外干预反而略显保守（Gap增加47%）；在Clean(small)场景下有10%的改进。
+
+4.不平衡数据有待改进：在Imbalanced场景下，AdaPrune略逊于XGBoost（Gap增加8%），这可能是因为当前的监控指标主要基于准确率，对类别不平衡场景的敏感度不足，这是未来工作的改进方向。
+
+综合来看，AdaPrune最适合噪声数据和高维数据场景，在这些场景下能够显著降低过拟合风险；而在干净的大规模数据上，使用默认XGBoost可能是更高效的选择。
 
 #### 4.3.6. Ablation Study
 为验证AdaPrune各组件的贡献，我们在diabetes和ionosphere数据集上进行消融实验。表12给出消融实验结果。
 
-Table 12: Ablation study results
+Table 12
+
+Ablation study results
 
 |Configuration|Description|Accuracy|Gap|
 |---|---|---|---|
@@ -370,7 +581,55 @@ Table 12: Ablation study results
 
 图5展示了消融实验的对比结果。
 
-![img]((b) Gap by Conf iguration(a) Accuracy by Conf iguration0.8200.100.8150.09000.09000.090.810dee7%reduction0.8073e eA tel0.08noltezi le tene0.07730.80560.07580.80480.07480.80420.80420.8050.070.8000.06-0.7950.7900.05FullNoFullNo.TrendData-AwareGapTrendData-AwareGapAdaptationHybr idOnlyOnlyAdaptationOnlyHybr idOnlyOnlyOnly)
+![img]((b) Gap by Conf iguration
+(a) Accuracy by Conf iguration
+0.820
+0.10
+0.815
+0.0900
+0.0900
+0.09
+0.810
+dee
+7%reduction
+0.8073
+e eA tel
+0.08
+noltezi le tene
+0.0773
+0.8056
+0.0758
+0.8048
+0.0748
+0.8042
+0.8042
+0.805
+0.07
+0.800
+0.06-
+0.795
+0.790
+0.05
+Full
+No
+Full
+No.
+Trend
+Data-Aware
+Gap
+Trend
+Data-Aware
+Gap
+Adaptation
+Hybr id
+Only
+Only
+Adaptation
+Only
+Hybr id
+Only
+Only
+Only)
 
 图5: 消融实验结果。(a)各配置的测试准确率；(b)各配置的泛化差距。绿色箭头标注Full_hybrid相比No_adaptation的17%改进。
 
@@ -391,11 +650,15 @@ Table 13: Component contribution analysis
 
 在7个数据集上，通过与XGBoost、随机森林等基线方法的对比实验，验证了AdaPrune在降低泛化差距方面的有效性。实验结果表明：
 
-1. 有效控制过拟合：AdaPrune_hybrid将平均泛化差距从10.33%降低到9.32%，降低9.8%
-2. 噪声数据优势显著：在synthetic_noisy场景下改进幅度达41.6%，特别适合数据质量不理想的应用
-3. 消融实验验证：在线调整机制使Gap降低17%，是核心贡献
-4. 混合策略最优：分阶段使用不同策略的混合方法优于任何单一策略
-5. 准确率损失可控：准确率下降约2%，是换取更好泛化能力的合理代价
+1.有效控制过拟合：AdaPrune_hybrid将平均泛化差距从10.33%降低到9.32%，降低9.8%
+
+2.噪声数据优势显著：在synthetic_noisy场景下改进幅度达41.6%，特别适合数据质量不理想的应用
+
+3.消融实验验证：在线调整机制使Gap降低17%，是核心贡献
+
+4.混合策略最优：分阶段使用不同策略的混合方法优于任何单一策略
+
+5.准确率损失可控：准确率下降约2%，是换取更好泛化能力的合理代价
 
 本文的AdaPrune算法训练时间比XGBoost较长，约为12倍，这是由于采取增量训练和周期性评估的开销。因此，未来的工作将考虑与XGBoost/LightGBM原生C++实现集成以降低计算开销，以及将方法扩展到回归任务和排序任务。
 
