@@ -89,31 +89,84 @@ def get_adaprune_models():
     }
 
 
-def evaluate_model(model, X_train, y_train, X_test, y_test):
+# def evaluate_model(model, X_train, y_train, X_test, y_test):
+#     """评估单个模型"""
+#     start_time = time. time()
+#     model.fit(X_train, y_train)
+#     train_time = time. time() - start_time
+#
+#     y_pred = model.predict(X_test)
+#
+#     if hasattr(model, 'predict_proba'):
+#         try:
+#             y_proba = model.predict_proba(X_test)
+#         except:
+#             y_proba = None
+#     else:
+#         y_proba = None
+#
+#     # 计算指标
+#     accuracy = accuracy_score(y_test, y_pred)
+#
+#     n_classes = len(np.unique(y_test))
+#     f1 = f1_score(y_test, y_pred, average='weighted' if n_classes > 2 else 'binary')
+#
+#     # AUC
+#     try:
+#         if y_proba is not None:
+#             if n_classes == 2:
+#                 auc = roc_auc_score(y_test, y_proba[:, 1])
+#             else:
+#                 auc = roc_auc_score(y_test, y_proba, multi_class='ovr', average='weighted')
+#         else:
+#             auc = np.nan
+#     except:
+#         auc = np.nan
+#
+#     return {
+#         'accuracy':  accuracy,
+#         'f1': f1,
+#         'roc_auc':  auc,
+#         'train_time':  train_time
+#     }
+def evaluate_model(model, X_train, y_train, X_test, y_test, model_name):
     """评估单个模型"""
-    start_time = time. time()
-    model.fit(X_train, y_train)
-    train_time = time. time() - start_time
-    
-    y_pred = model.predict(X_test)
-    
+    start_time = time.time()
+
+    # 训练
+    if 'early_stop' in model_name and hasattr(model, 'fit'):
+        # XGBoost早停需要eval_set
+        model.fit(
+            X_train, y_train,
+            eval_set=[(X_test, y_test)],
+            verbose=False
+        )
+    else:
+        model.fit(X_train, y_train)
+
+    train_time = time.time() - start_time
+
+    # 预测 (同时预测测试集和训练集)
+    y_pred_test = model.predict(X_test)
+    y_pred_train = model.predict(X_train)
+
     if hasattr(model, 'predict_proba'):
-        try:
-            y_proba = model.predict_proba(X_test)
-        except:
-            y_proba = None
-    else: 
+        y_proba = model.predict_proba(X_test)
+    else:
         y_proba = None
-    
+
     # 计算指标
-    accuracy = accuracy_score(y_test, y_pred)
-    
-    n_classes = len(np.unique(y_test))
-    f1 = f1_score(y_test, y_pred, average='weighted' if n_classes > 2 else 'binary')
-    
+    test_accuracy = accuracy_score(y_test, y_pred_test)
+    train_accuracy = accuracy_score(y_train, y_pred_train)
+    # 论文核心指标：泛化差距 (Gap) = 训练集准确率 - 测试集准确率
+    gap = train_accuracy - test_accuracy
+
+    f1 = f1_score(y_test, y_pred_test, average='weighted')
+
     # AUC
     try:
         if y_proba is not None:
+            n_classes = len(np.unique(y_test))
             if n_classes == 2:
                 auc = roc_auc_score(y_test, y_proba[:, 1])
             else:
@@ -122,14 +175,15 @@ def evaluate_model(model, X_train, y_train, X_test, y_test):
             auc = np.nan
     except:
         auc = np.nan
-    
-    return {
-        'accuracy':  accuracy,
-        'f1': f1,
-        'roc_auc':  auc,
-        'train_time':  train_time
-    }
 
+    return {
+        'accuracy': test_accuracy,
+        'train_accuracy': train_accuracy,
+        'gap': gap,
+        'f1': f1,
+        'roc_auc': auc,
+        'train_time': train_time
+    }
 
 def run_experiment(datasets=None, n_folds=5, random_state=42):
     """运行主实验"""
@@ -251,27 +305,48 @@ def run_experiment(datasets=None, n_folds=5, random_state=42):
     return results_df, summary
 
 
-def generate_summary(results_df):
+# def generate_summary(results_df):
+#     """生成汇总表"""
+#     # 按方法聚合
+#     summary = results_df. groupby('method').agg({
+#         'accuracy': ['mean', 'std'],
+#         'f1': ['mean', 'std'],
+#         'roc_auc': ['mean', 'std'],
+#         'train_time':  'mean'
+#     }).round(4)
+#
+#     # 展平列名
+#     summary.columns = ['_'.join(col).strip() for col in summary.columns]
+#
+#     # 计算排名
+#     summary['rank'] = summary['accuracy_mean'].rank(ascending=False)
+#
+#     # 排序
+#     summary = summary.sort_values('accuracy_mean', ascending=False)
+#
+#     return summary
+def generate_summary(results_df: pd.DataFrame) -> pd.DataFrame:
     """生成汇总表"""
-    # 按方法聚合
-    summary = results_df. groupby('method').agg({
+    # 按方法聚合 (加上 gap 和 train_accuracy)
+    summary = results_df.groupby('method').agg({
         'accuracy': ['mean', 'std'],
+        'train_accuracy': ['mean', 'std'],
+        'gap': ['mean', 'std'],
         'f1': ['mean', 'std'],
         'roc_auc': ['mean', 'std'],
-        'train_time':  'mean'
+        'train_time': 'mean'
     }).round(4)
-    
+
     # 展平列名
     summary.columns = ['_'.join(col).strip() for col in summary.columns]
-    
+
     # 计算排名
     summary['rank'] = summary['accuracy_mean'].rank(ascending=False)
-    
+
     # 排序
     summary = summary.sort_values('accuracy_mean', ascending=False)
-    
-    return summary
 
+    return summary
 
 if __name__ == "__main__":
     import argparse
