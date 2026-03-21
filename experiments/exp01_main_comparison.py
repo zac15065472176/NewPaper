@@ -252,9 +252,10 @@ def run_experiment(datasets=None, n_folds=5, random_state=42):
             for model_name, model_fn in all_models.items():
                 try:
                     model = model_fn()  # 创建新模型实例
-                    
+
+                    # 加上了 model_name 参数
                     metrics = evaluate_model(
-                        model, X_train, y_train, X_test, y_test
+                        model, X_train, y_train, X_test, y_test, model_name
                     )
                     
                     results.append({
