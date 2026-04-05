@@ -4,9 +4,8 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import accuracy_score
 import time
 
-# 导入你自己的模块 (请根据你的实际路径调整)
+# 导入你自己的模块
 from adaprune.core.adaprune_gbdt import AdaPruneGBDT
-# 假设你有一个加载数据的方法，或者你自己用 pandas 读入
 from adaprune.utils.data_loader import load_dataset
 
 
@@ -26,8 +25,12 @@ def run_beta_sensitivity():
         print(f"\n========================================")
         print(f"📦 正在处理数据集: {ds_name}")
 
-        # 加载数据 (替换为你自己的加载方式)
-        X, y = load_dataset(ds_name)
+        # 加载数据 (修正了这里的解包错误，加上了 metadata)
+        try:
+            X, y, metadata = load_dataset(ds_name)
+        except Exception as e:
+            print(f"加载数据集 {ds_name} 失败: {e}")
+            continue
 
         for beta in beta_values:
             print(f"  👉 正在测试 Beta = {beta} ...", end=" ")
@@ -39,20 +42,19 @@ def run_beta_sensitivity():
             fold_gap = []
 
             for train_idx, test_idx in skf.split(X, y):
-                X_train_full, X_test = X.iloc[train_idx], X.iloc[test_idx]
-                y_train_full, y_test = y.iloc[train_idx], y.iloc[test_idx]
+                X_train_full, X_test = X[train_idx], X[test_idx]
+                y_train_full, y_test = y[train_idx], y[test_idx]
 
                 # 初始化你的模型
-                # 注意：这里 strategy 必须用 'trend' (Trend-based)
-                # 并且传入当前的 beta 值（请确保你的类支持这个参数！）
                 model = AdaPruneGBDT(
-                    strategy='trend',
-                    gap_threshold=0.05,  # 固定阈值
-                    ema_beta=beta,  # <--- 核心：传入当前循环的平滑系数
-                    random_state=42
+                    strategy='trend_based',  # 注意：在你的代码里可能是 'trend_based' 而不是 'trend'
+                    adaptation_frequency=5,
+                    ema_beta=beta,  # 传入当前循环的平滑系数
+                    random_state=42,
+                    verbose=0
                 )
 
-                # 训练模型 (内部会自动切分20%做验证集)
+                # 训练模型
                 model.fit(X_train_full, y_train_full)
 
                 # 预测
@@ -81,18 +83,19 @@ def run_beta_sensitivity():
                 'Gap': mean_gap
             })
 
-    # 将结果转换为易读的表格格式并打印，方便你直接抄到论文的 Table 7 里
-    df_results = pd.DataFrame(results)
-    print("\n✅ 实验跑完啦！下面是你需要的论文表格数据：\n")
+    # 将结果转换为易读的表格格式并打印
+    if results:
+        df_results = pd.DataFrame(results)
+        print("\n✅ 实验跑完啦！下面是你需要的论文表格数据：\n")
 
-    # 透视表格式化输出
-    pivot_acc = df_results.pivot(index='Dataset', columns='Beta', values='Accuracy')
-    pivot_gap = df_results.pivot(index='Dataset', columns='Beta', values='Gap')
+        # 透视表格式化输出
+        pivot_acc = df_results.pivot(index='Dataset', columns='Beta', values='Accuracy')
+        pivot_gap = df_results.pivot(index='Dataset', columns='Beta', values='Gap')
 
-    print("--- Accuracy 准确率 ---")
-    print(pivot_acc.round(4))
-    print("\n--- Generalization Gap 泛化差距 ---")
-    print(pivot_gap.round(4))
+        print("--- Accuracy 准确率 ---")
+        print(pivot_acc.round(4))
+        print("\n--- Generalization Gap 泛化差距 ---")
+        print(pivot_gap.round(4))
 
 
 if __name__ == "__main__":
