@@ -77,6 +77,7 @@ class AdaPruneGBDT:
         learning_rate: float = 0.1,
         strategy:  str = 'hybrid',
         adaptation_frequency: int = 5,
+        ema_beta: float = 0.7,  # <--- 新增：允许外部传入平滑系数
         task:  Literal['classification', 'regression'] = 'classification',
         validation_fraction: float = 0.2,
         early_stopping_rounds: Optional[int] = None,
@@ -100,7 +101,9 @@ class AdaPruneGBDT:
         
         # 组件初始化
         self.data_analyzer = DataProfileAnalyzer(random_state=random_state)
-        self.state_monitor = StateMonitor()
+        # self.state_monitor = StateMonitor()
+        self.ema_beta = ema_beta
+        self.state_monitor = StateMonitor(ema_beta=self.ema_beta)  # <--- 把参数传进监控器
         self.pruning_controller = PruningController(
             strategy=strategy,
             adaptation_frequency=adaptation_frequency,

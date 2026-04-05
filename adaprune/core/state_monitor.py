@@ -36,16 +36,21 @@ class StateMonitor:
     - 平台期分数 (plateau_score)
     """
     
-    def __init__(self, window_size: int = 10):
-        """
-        初始化监控器
-        
-        Parameters
-        ----------
-        window_size : int
-            计算趋势时的滑动窗口大小
-        """
+    # def __init__(self, window_size: int = 10):
+    #     """
+    #     初始化监控器
+    #
+    #     Parameters
+    #     ----------
+    #     window_size : int
+    #         计算趋势时的滑动窗口大小
+    #     """
+    #     self.window_size = window_size
+
+    def __init__(self, window_size: int = 10, ema_beta: float = 0.7):
         self.window_size = window_size
+        self.ema_beta = ema_beta  # <--- 新增：EMA平滑系数
+        self.ema_trend = 0.0
         
         # 历史记录
         self. train_losses:  List[float] = []
@@ -65,6 +70,7 @@ class StateMonitor:
         self.val_metrics = []
         self.complexities = []
         self. current_state = TrainingState()
+        self.ema_trend = 0.0  # <--- 新增：重置EMA趋势
     
     def update(self,
                train_loss: float,
@@ -141,28 +147,48 @@ class StateMonitor:
             plateau_score=plateau_score,
         )
     
+    # def _compute_gap_trend(self) -> float:
+    #     """计算差距趋势"""
+    #     n = len(self. train_metrics)
+    #
+    #     if n < self.window_size:
+    #         if n < 2:
+    #             return 0.0
+    #         gaps = [self.train_metrics[i] - self.val_metrics[i] for i in range(n)]
+    #     else:
+    #         gaps = [self.train_metrics[i] - self. val_metrics[i]
+    #                for i in range(-self.window_size, 0)]
+    #
+    #     if len(gaps) < 2:
+    #         return 0.0
+    #
+    #     # 线性拟合斜率
+    #     x = np.arange(len(gaps))
+    #     try:
+    #         slope = np.polyfit(x, gaps, 1)[0]
+    #         return float(slope)
+    #     except Exception:
+    #         return 0.0
+
     def _compute_gap_trend(self) -> float:
-        """计算差距趋势"""
-        n = len(self. train_metrics)
-        
-        if n < self.window_size:
-            if n < 2:
-                return 0.0
-            gaps = [self.train_metrics[i] - self.val_metrics[i] for i in range(n)]
-        else:
-            gaps = [self.train_metrics[i] - self. val_metrics[i] 
-                   for i in range(-self.window_size, 0)]
-        
-        if len(gaps) < 2:
+        """计算差距趋势 (使用 EMA 指数移动平均)"""
+        n = len(self.train_metrics)
+
+        if n < 2:
             return 0.0
-        
-        # 线性拟合斜率
-        x = np.arange(len(gaps))
-        try:
-            slope = np.polyfit(x, gaps, 1)[0]
-            return float(slope)
-        except Exception:
-            return 0.0
+
+        # 1. 计算当前轮次的 Gap
+        current_gap = self.train_metrics[-1] - self.val_metrics[-1]
+        # 2. 计算上一轮次的 Gap
+        prev_gap = self.train_metrics[-2] - self.val_metrics[-2]
+
+        # 3. 原始差距变化量 (raw_diff)
+        raw_diff = current_gap - prev_gap
+
+        # 4. 应用 EMA 公式进行平滑
+        self.ema_trend = self.ema_beta * self.ema_trend + (1 - self.ema_beta) * raw_diff
+
+        return float(self.ema_trend)
     
     def _compute_val_improvement(self) -> float:
         """计算验证集改进"""
