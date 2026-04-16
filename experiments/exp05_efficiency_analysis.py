@@ -1,5 +1,5 @@
 """
-Efficiency analysis experiment.
+Efficiency analysis experiment (Optimized Callback Version).
 """
 
 from __future__ import annotations
@@ -10,7 +10,8 @@ import xgboost as xgb
 from sklearn.model_selection import GridSearchCV
 from sklearn.datasets import make_classification
 
-from adaprune.core.adaprune_gbdt import AdaPruneGBDT
+# Replace pure Python GBDT with the optimized Native Callback XGB implementation
+from adaprune.core.adaprune_xgb import AdaPruneXGB
 
 
 def main():
@@ -18,20 +19,24 @@ def main():
     results = []
 
     for n in sizes:
+        # Generate synthetic binary classification dataset
         X, y = make_classification(n_samples=n, n_features=30, random_state=42)
 
-        model = AdaPruneGBDT(n_estimators=50)
+        # 1. Test AdaPrune (Optimized C++ Callback)
+        model = AdaPruneXGB(n_estimators=50, verbose=0)
         start = time.time()
         model.fit(X, y)
         t_adaprune = time.time() - start
 
-        xgb_model = xgb.XGBClassifier(eval_metric="logloss")
+        # 2. Test standard XGBoost
+        xgb_model = xgb.XGBClassifier(n_estimators=50, eval_metric="logloss", use_label_encoder=False, verbosity=0)
         start = time.time()
         xgb_model.fit(X, y)
         t_xgb = time.time() - start
 
+        # 3. Test standard Grid Search (Traditional HPO)
         grid = GridSearchCV(
-            xgb.XGBClassifier(eval_metric="logloss"),
+            xgb.XGBClassifier(n_estimators=50, eval_metric="logloss", use_label_encoder=False, verbosity=0),
             param_grid={"max_depth": [3, 6], "min_child_weight": [1, 3]},
             cv=3,
         )
@@ -44,15 +49,18 @@ def main():
         results.append(
             {
                 "n_samples": n,
-                "time_adaprune": t_adaprune,
-                "time_xgboost": t_xgb,
-                "time_gridsearch": t_grid,
-                "overhead_percent": overhead,
+                "time_adaprune": round(t_adaprune, 4),
+                "time_xgboost": round(t_xgb, 4),
+                "time_gridsearch": round(t_grid, 4),
+                "overhead_percent": round(overhead, 2),
             }
         )
 
+    # Output formatted results
+    print(f"{'Samples':<10} | {'AdaPrune(s)':<12} | {'XGBoost(s)':<12} | {'GridSearch(s)':<14} | {'Overhead(%)':<12}")
+    print("-" * 70)
     for r in results:
-        print(r)
+        print(f"{r['n_samples']:<10} | {r['time_adaprune']:<12.4f} | {r['time_xgboost']:<12.4f} | {r['time_gridsearch']:<14.4f} | {r['overhead_percent']:<12.2f}%")
 
 
 if __name__ == "__main__":

@@ -1,21 +1,100 @@
 Metadata-Version: 2.4
 Name: adaprune
 Version: 0.1.0
-Summary: AdaPrune: Adaptive Pruning for Gradient Boosted Decision Trees
-Author: AdaPrune Authors
-Requires-Dist: numpy==1.26.4
-Requires-Dist: pandas==2.2.0
-Requires-Dist: scikit-learn==1.4.0
-Requires-Dist: matplotlib==3.8.2
-Requires-Dist: seaborn==0.13.2
-Requires-Dist: openml==0.14.1
-Requires-Dist: tqdm==4.66.1
-Requires-Dist: scipy==1.12.0
-Requires-Dist: xgboost==2.0.3
-Requires-Dist: lightgbm==4.2.0
-Requires-Dist: optuna==3.5.0
-Requires-Dist: torch==2.1.2
-Requires-Dist: psutil==5.9.8
+Summary: Adaptive Pruning for Gradient Boosting Decision Trees
+Home-page: https://github.com/yourusername/adaprune
+Author: Your Name
+Author-email: your. email@example.com
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: scipy>=1.10.0
+Requires-Dist: scikit-learn>=1.3.0
+Requires-Dist: xgboost>=2.0.0
+Requires-Dist: lightgbm>=4.0.0
+Requires-Dist: matplotlib>=3.7.0
+Requires-Dist: seaborn>=0.12.0
+Requires-Dist: tqdm>=4.65.0
+Requires-Dist: joblib>=1.3.0
+Requires-Dist: openml>=0.14.0
+Requires-Dist: optuna>=3.4.0
 Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
 Dynamic: requires-dist
+Dynamic: requires-python
 Dynamic: summary
+
+# AdaPrune:  Online Adaptive Pruning for Gradient Boosting Decision Trees
+
+## 概述
+
+AdaPrune 是一个创新的自适应剪枝框架，用于梯度提升决策树（GBDT）。它在训练过程中动态调整剪枝参数，以实现更好的泛化性能。
+
+## 核心特性
+
+- 🔄 **在线自适应剪枝**：训练过程中动态调整 max_depth、min_samples_leaf 等参数
+- 📊 **数据感知策略**：根据数据集特征（噪声、样本量、维度）调整适应速度
+- 🎯 **多种策略**：Gap-Based、Trend-Based、Data-Aware、Hybrid
+- ⚡ **高效实现**：计算开销仅增加约5-10%
+
+## 安装
+
+```bash
+conda create -n adaprune python=3.10
+conda activate adaprune
+pip install -r requirements.txt
+```
+
+## 快速开始
+
+```python
+from adaprune import AdaPruneGBDT
+
+# 创建模型
+model = AdaPruneGBDT(
+    n_estimators=100,
+    strategy='hybrid',
+    adaptation_frequency=5
+)
+
+# 训练
+model.fit(X_train, y_train)
+
+# 预测
+y_pred = model. predict(X_test)
+
+# 查看自适应历史
+model.plot_adaptation_history()
+```
+
+## 项目结构
+
+```
+AdaPrune/
+├── adaprune/          # 核心代码
+├── experiments/       # 实验脚本
+├── notebooks/         # Jupyter notebooks
+├── data/              # 数据集
+├── results/           # 实验结果
+└── scripts/           # 工具脚本
+```
+
+## 引用
+
+如果您使用了本项目，请引用：
+
+```bibtex
+@article{adaprune2024,
+  title={AdaPrune: Online Adaptive Pruning for Gradient Boosting Decision Trees},
+  author={Your Name},
+  year={2024}
+}
+```

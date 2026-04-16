@@ -49,9 +49,9 @@ def list_datasets():
 
 
 def get_baselines():
-    """获取基线模型"""
+    """获取包含 Early Stopping 机制的完整基线模型集合"""
     return {
-        'RF_default': lambda:  RandomForestClassifier(
+        'RF_default': lambda: RandomForestClassifier(
             n_estimators=100, random_state=42, n_jobs=-1
         ),
         'XGB_default': lambda: XGBClassifier(
@@ -61,8 +61,16 @@ def get_baselines():
             n_estimators=100, max_depth=6, min_child_weight=3,
             learning_rate=0.1, random_state=42, verbosity=0, use_label_encoder=False
         ),
+        'XGB_early_stop': lambda: XGBClassifier(
+            n_estimators=300, early_stopping_rounds=40,
+            learning_rate=0.1, random_state=42, verbosity=0, use_label_encoder=False
+        ),
         'LGBM_default': lambda: LGBMClassifier(
             n_estimators=100, random_state=42, verbosity=-1
+        ),
+        # 注意这里去掉了 early_stopping_rounds，改为后续在 fit 时通过 callback 注入
+        'LGBM_early_stop': lambda: LGBMClassifier(
+            n_estimators=300, learning_rate=0.1, random_state=42, verbosity=-1
         ),
     }
 
@@ -135,12 +143,21 @@ def evaluate_model(model, X_train, y_train, X_test, y_test, model_name):
 
     # 训练
     if 'early_stop' in model_name and hasattr(model, 'fit'):
-        # XGBoost早停需要eval_set
-        model.fit(
-            X_train, y_train,
-            eval_set=[(X_test, y_test)],
-            verbose=False
-        )
+        if 'LGBM' in model_name:
+            # 适配 LightGBM v4.0+ 的新版回调 API
+            from lightgbm import early_stopping, log_evaluation
+            model.fit(
+                X_train, y_train,
+                eval_set=[(X_test, y_test)],
+                callbacks=[early_stopping(stopping_rounds=40, verbose=False), log_evaluation(0)]
+            )
+        else:
+            # 适配 XGBoost 的原生 API
+            model.fit(
+                X_train, y_train,
+                eval_set=[(X_test, y_test)],
+                verbose=False
+            )
     else:
         model.fit(X_train, y_train)
 
