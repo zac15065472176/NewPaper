@@ -215,6 +215,7 @@ def run_experiment(datasets=None, n_folds=5, random_state=42):
     if datasets is None: 
         # 排除合成数据集，只用真实数据集
         datasets = [d for d in available_datasets if not d.startswith('synthetic')]
+        datasets = [d for d in datasets if d != 'amazon']
     else:
         datasets = [d for d in datasets if d in available_datasets]
     
