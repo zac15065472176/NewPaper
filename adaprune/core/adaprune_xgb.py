@@ -222,11 +222,29 @@ class AdaPruneXGB:
         self.current_reg_lambda = 1.0
         self.current_reg_alpha = 0.0
 
+    # def _get_xgb_params(self) -> Dict:
+    #     params = {
+    #         'objective': 'binary:logistic' if self.n_classes_ == 2 else 'multi:softprob',
+    #         # 引入 error/merror 以供 Callback 获取精度指标
+    #         'eval_metric': ['logloss', 'error' if self.n_classes_ == 2 else 'merror'],
+    #         'max_depth': int(self.current_max_depth),
+    #         'min_child_weight': self.current_min_child_weight,
+    #         'gamma': self.current_gamma,
+    #         'reg_lambda': self.current_reg_lambda,
+    #         'reg_alpha': self.current_reg_alpha,
+    #         'subsample': self.current_subsample,
+    #         'colsample_bytree': self.current_colsample,
+    #         'learning_rate': self.learning_rate,
+    #         'seed': self.random_state or 42,
+    #         'verbosity': 0,
+    #     }
+
     def _get_xgb_params(self) -> Dict:
         params = {
             'objective': 'binary:logistic' if self.n_classes_ == 2 else 'multi:softprob',
-            # 引入 error/merror 以供 Callback 获取精度指标
-            'eval_metric': ['logloss', 'error' if self.n_classes_ == 2 else 'merror'],
+            # 动态适配二分类与多分类的损失函数测度
+            'eval_metric': ['logloss' if self.n_classes_ == 2 else 'mlogloss',
+                            'error' if self.n_classes_ == 2 else 'merror'],
             'max_depth': int(self.current_max_depth),
             'min_child_weight': self.current_min_child_weight,
             'gamma': self.current_gamma,

@@ -27,8 +27,8 @@ warnings.filterwarnings('ignore')
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from adaprune import AdaPruneGBDT
-
+# from adaprune import AdaPruneGBDT
+from adaprune.core.adaprune_xgb import AdaPruneXGB
 # 数据和结果目录
 DATA_DIR = PROJECT_ROOT / 'data' / 'processed'
 RESULTS_DIR = PROJECT_ROOT / 'results' / 'tables'
@@ -76,24 +76,16 @@ def get_baselines():
 
 
 def get_adaprune_models():
-    """获取AdaPrune模型变体"""
+    """获取AdaPrune模型（使用基于 XGBoost Callback 的高效完全体）"""
     return {
-        'AdaPrune_gap':  lambda: AdaPruneGBDT(
-            n_estimators=100, strategy='gap_based',
-            adaptation_frequency=5, random_state=42, verbose=0
-        ),
-        'AdaPrune_trend':  lambda: AdaPruneGBDT(
-            n_estimators=100, strategy='trend_based',
-            adaptation_frequency=5, random_state=42, verbose=0
-        ),
-        'AdaPrune_data': lambda: AdaPruneGBDT(
-            n_estimators=100, strategy='data_aware',
-            adaptation_frequency=5, random_state=42, verbose=0
-        ),
-        'AdaPrune_hybrid': lambda: AdaPruneGBDT(
-            n_estimators=100, strategy='hybrid',
-            adaptation_frequency=5, random_state=42, verbose=0
-        ),
+        'AdaPrune': lambda: AdaPruneXGB(
+            n_estimators=300,        # 给足 300 棵树，与早停基线公平对决
+            learning_rate=0.1,
+            adaptation_frequency=5,  # 每 5 轮检测一次泛化状态
+            early_stopping_rounds=40,
+            random_state=42,
+            verbose=0
+        )
     }
 
 
