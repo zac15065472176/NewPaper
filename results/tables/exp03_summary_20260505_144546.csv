@@ -1,0 +1,6 @@
+config,acc_mean,acc_std,gap_mean,gap_std
+DataAware_only,0.8625,0.0745,0.0419,0.0353
+Full_hybrid,0.8623,0.0744,0.0432,0.0374
+Gap_only,0.8606,0.0751,0.0448,0.0396
+No_adaptation,0.8588,0.076,0.0491,0.0461
+Trend_only,0.8588,0.076,0.0491,0.0461

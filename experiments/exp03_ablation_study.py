@@ -93,12 +93,26 @@ def run_ablation_study(n_runs=3, random_state=42):
         test_data = {'X': X. astype(np.float32), 'y': y. astype(np. int32)}
     else:
         # 选择数据集
-        target = ['diabetes', 'ionosphere', 'credit-g', 'spambase', 'vehicle']
+        # target = ['diabetes', 'ionosphere', 'credit-g', 'spambase', 'vehicle']
+        # datasets = [d for d in target if d in available_datasets]
+        #
+        # if len(datasets) == 0:
+        #     datasets = available_datasets[: 5]
+        # 使用全部 21 个数据集进行消融实验
+        # datasets = available_datasets
+        # 必须严格锁定为主实验中使用的 21 个真实数据集！
+        target = [
+            'adult', 'bank-marketing', 'credit-default', 'credit-g',
+            'diabetes', 'dry-bean', 'eeg-eye-state', 'electricity',
+            'ionosphere', 'kc1', 'letter', 'magic', 'mushroom',
+            'phoneme', 'satimage', 'segment', 'sonar', 'spambase',
+            'tic-tac-toe', 'vehicle', 'waveform'
+        ]
+
+        # 过滤掉合成数据集和其他多余数据
         datasets = [d for d in target if d in available_datasets]
-        
-        if len(datasets) == 0:
-            datasets = available_datasets[: 5]
-        
+        print(f"Filtered datasets for ablation ({len(datasets)}): {datasets}")
+
         test_data = None
     
     print(f"Using datasets: {datasets}")
